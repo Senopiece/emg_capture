@@ -1,10 +1,11 @@
 #include <Arduino.h>
 
-#define PACKET_SIZE 16      // Number of 16-bit values in the packet
+// NOTE: using internal 12-bit adc - each channel has two bytes in a packet
+#define CHANNELS 16         // Number of channels a packet is carrying
 #define PACKET_RATE_HZ 7000 // Hz
 #define SAMPLE_PIN 4        // Analog pin to read from
 
-uint16_t packet[PACKET_SIZE + 1];
+uint16_t packet[CHANNELS + 1];
 const uint8_t *data = reinterpret_cast<const uint8_t *>(&packet);
 
 uint32_t last_time = 0;
@@ -21,7 +22,7 @@ void setup()
     // pinMode(SAMPLE_PIN, INPUT);
 
     // prepare packet end
-    packet[PACKET_SIZE] = 0xFFFF;
+    packet[CHANNELS] = 0xFFFF;
 }
 
 void loop()
@@ -40,7 +41,7 @@ void loop()
         count = (count + 1) % 4096;
 
         // Populate the packet with dummy data (e.g., incrementing values for testing)
-        for (size_t i = 0; i < PACKET_SIZE; i++)
+        for (size_t i = 0; i < CHANNELS; i++)
         {
             packet[i] = count;
         }
