@@ -46,6 +46,7 @@ void loop()
         }
 
         // Send the packet
+        // assert data is not OxFFFF
         Serial.write(data, sizeof(packet));
     }
 }
