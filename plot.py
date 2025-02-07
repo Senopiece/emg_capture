@@ -1,19 +1,25 @@
+import argparse
 import serial
 import time
 import matplotlib.pyplot as plt
 from collections import deque
 
-# Create a deque to store the last N records
+# Create a deque for each channel to store the last N records
 dmaxlen = 10000
-data = deque([0] * dmaxlen, maxlen=dmaxlen)
+channels = 2  # Ensure this matches the number of channels you're using
+data = [deque([0] * dmaxlen, maxlen=dmaxlen) for _ in range(channels)]
 
 # Set up the plot
 fig, ax = plt.subplots()
-(line,) = ax.plot(data)
+lines = []
+for i in range(channels):
+    line, = ax.plot(data[i], label=f'Channel {i}')
+    lines.append(line)
 ax.set_ylim(0, 4095)  # ADC range for 12-bit resolution is 0-4095
 ax.set_title("Real-Time ADC Data")
 ax.set_xlabel("Samples")
 ax.set_ylabel("ADC Value")
+ax.legend()
 
 # Text objects to display data rate and buffer size
 data_rate_text = ax.text(
@@ -44,9 +50,9 @@ packet_count = 0
 last_update_time = time.time()
 
 # Serial configuration
-serial_port = "COM7"  # Replace with your serial port (e.g., '/dev/ttyUSB0')
 baud_rate = 256000
-packet_size = 2 * 16  # Expecting 2-byte payloads after COBS decoding
+bytes_per_channel = 2
+packet_size = channels * bytes_per_channel
 
 # Buffer for incoming serial data
 buffer = bytearray()
@@ -96,13 +102,13 @@ def read_packets(ser):
 
             # Process the packet
             try:
-                # Decode the packet or process raw data
                 if len(packet) == packet_size:
-                    value = int.from_bytes(packet[:2], byteorder="little")
-                    data.append(value)
+                    # Append each channel's value to their respective deque
+                    for i in range(channels):
+                        data[i].append(int.from_bytes(packet[2*i:2*(i+1)], byteorder="little"))
                     packet_count += 1
                 else:
-                    print(f"Unexpected packet size: {len(packet)}")
+                    print(f"Unexpected packet size: {len(packet)} (expected {packet_size})")
             except Exception as e:
                 print(f"Packet processing error: {e}")
     except Exception as e:
@@ -117,8 +123,9 @@ def plot_update(ser):
         # Read and process all available packets
         read_packets(ser)
 
-        # Update the plot
-        line.set_ydata(data)
+        # Update each channel's plot line
+        for i, line in enumerate(lines):
+            line.set_ydata(data[i])
 
         # Calculate and display debug values
         current_time = time.time()
@@ -137,7 +144,7 @@ def plot_update(ser):
         plt.pause(0.01)  # Allow matplotlib to process GUI events
 
 
-def main():
+def main(serial_port):
     """Main loop for reading serial data and updating the plot."""
     global plot_running
 
@@ -159,4 +166,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        prog='Siganl Plotter',
+    )
+    parser.add_argument('-p', '--port', type=str, required=True)
+    args = parser.parse_args()
+
+    main(args.port)
