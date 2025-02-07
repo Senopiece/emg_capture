@@ -3,10 +3,10 @@
 // TODO: maybe oversample the adc to get a more accurate reading
 
 // NOTE: a channel value is read using internal 12-bit adc - each channel has two bytes in a packet
-#define CHANNELS 2          // Number of channels a packet is carrying
+#define CHANNELS 6          // Number of channels a packet is carrying
 #define PACKET_RATE_HZ 2000 // Hz
 
-const uint8_t pin[CHANNELS] = {3, 11}; // Analog pins to read from
+const uint8_t pin[CHANNELS] = {18, 8, 3, 9, 10, 11}; // Analog pins to read from
 
 uint16_t packet[CHANNELS + 1];
 const uint8_t *data = reinterpret_cast<const uint8_t *>(&packet);

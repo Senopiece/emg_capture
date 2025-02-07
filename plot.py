@@ -6,7 +6,7 @@ from collections import deque
 
 # Create a deque for each channel to store the last N records
 dmaxlen = 10000
-channels = 2  # Ensure this matches the number of channels you're using
+channels = 6  # Ensure this matches the number of channels you're using
 data = [deque([0] * dmaxlen, maxlen=dmaxlen) for _ in range(channels)]
 
 # Set up the plot
