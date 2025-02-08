@@ -60,6 +60,26 @@ buffer_lens = deque([0] * 100, maxlen=100)
 smooth_buffer_len = 0
 
 
+class SyntheticSerial:
+    """Mock serial port for generating synthetic ADC data."""
+    def __init__(self):
+        self.current_count = 0
+
+    @property
+    def in_waiting(self):
+        return 14  # 12 bytes data + 2 bytes delimiter
+
+    def read(self, size=1):
+        # Generate a synthetic packet with incrementing values
+        packet = bytearray()
+        for channel in range(channels):
+            value = (self.current_count + channel) % 4096
+            packet += value.to_bytes(2, byteorder='little')
+        packet += b'\xFF\xFF'
+        self.current_count += 1
+        return packet[:size]
+
+
 def on_close(event):
     """Handle the plot window close event."""
     global plot_running
@@ -70,9 +90,6 @@ def on_close(event):
 def read_packets(ser):
     """
     Read and decode all packets ending with [0xFF, 0xFF] from the serial buffer.
-
-    Args:
-        ser: Serial connection object.
     """
     global buffer, packet_count, smooth_buffer_len
 
@@ -98,7 +115,7 @@ def read_packets(ser):
 
             # Extract the packet (up to but excluding [0xFF, 0xFF])
             packet = buffer[:delimiter_index]
-            buffer = buffer[delimiter_index + 2 :]  # Remove the packet and delimiter
+            buffer = buffer[delimiter_index + 2:]  # Remove the packet and delimiter
 
             # Process the packet
             try:
@@ -151,25 +168,33 @@ def main(serial_port):
     # Connect the close event handler
     fig.canvas.mpl_connect("close_event", on_close)
 
-    # Open serial connection
-    try:
-        with serial.Serial(serial_port, baud_rate, timeout=1) as ser:
-            print(f"Listening on {serial_port} at {baud_rate} baud...")
-
-            # Main loop
+    if serial_port == 'synthetic':
+        # Use synthetic data generator
+        ser = SyntheticSerial()
+        print("Starting synthetic data mode...")
+        try:
             plot_update(ser)
-
-    except Exception as e:
-        print(f"Serial connection error: {e}")
-    finally:
-        print("Exiting program.")
+        finally:
+            print("Exiting program.")
+    else:
+        # Open real serial connection
+        try:
+            with serial.Serial(serial_port, baud_rate, timeout=1) as ser:
+                print(f"Listening on {serial_port} at {baud_rate} baud...")
+                plot_update(ser)
+        except Exception as e:
+            print(f"Serial connection error: {e}")
+        finally:
+            print("Exiting program.")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog='Siganl Plotter',
+        prog='Signal Plotter',
+        description='Plot real-time ADC data from serial port or generate synthetic data.'
     )
-    parser.add_argument('-p', '--port', type=str, required=True)
+    parser.add_argument('-p', '--port', type=str, required=True,
+                        help="Serial port name or 'synthetic' for synthetic data")
     args = parser.parse_args()
 
     main(args.port)
