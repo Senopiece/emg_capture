@@ -56,9 +56,7 @@ packet_size = channels * bytes_per_channel
 
 # Buffer for incoming serial data
 buffer = bytearray()
-buffer_lens = deque([0] * 100, maxlen=100)
-smooth_buffer_len = 0
-
+last_incoming_len = 0
 
 class SyntheticSerial:
     """Mock serial port for generating synthetic ADC data."""
@@ -91,16 +89,14 @@ def read_packets(ser):
     """
     Read and decode all packets ending with [0xFF, 0xFF] from the serial buffer.
     """
-    global buffer, packet_count, smooth_buffer_len
+    global buffer, packet_count, last_incoming_len
 
     try:
         # Read available bytes from the serial buffer
         incoming = ser.read(ser.in_waiting or 1)
+        last_incoming_len = len(incoming)
 
         # Track the incoming buffer length for smoothing (optional monitoring)
-        buffer_lens.append(len(incoming))
-        smooth_buffer_len = sum(buffer_lens) / len(buffer_lens)
-
         if not incoming:
             return
 
@@ -134,7 +130,7 @@ def read_packets(ser):
 
 def plot_update(ser):
     """Update the plot with the latest data."""
-    global packet_count, last_update_time, smooth_buffer_len
+    global packet_count, last_update_time, last_incoming_len
 
     while plot_running:
         # Read and process all available packets
@@ -152,7 +148,7 @@ def plot_update(ser):
             packet_count = 0
 
             data_rate_text.set_text(f"Data Rate: {data_rate:.2f} Hz")
-            buffer_size_text.set_text(f"Debt Size: {int(smooth_buffer_len)} bytes")
+            buffer_size_text.set_text(f"Debt Size: {int(last_incoming_len)} bytes")
 
             last_update_time = current_time
 
