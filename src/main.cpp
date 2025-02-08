@@ -30,6 +30,8 @@ void loop()
 {
     uint32_t current_time = micros();
 
+    // TODO: measure actual delay variance
+
     // Check if it's time to send the next packet
     if (current_time - last_time >= interval_us)
     {
