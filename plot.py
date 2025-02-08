@@ -87,8 +87,10 @@ def read_packets(ser):
     """
     Read and decode all packets ending with [0xFF, 0xFF] from the serial buffer.
     """
-    global buffer, packet_count, last_incoming_len
+    global packet_count, last_incoming_len
 
+    buffer = bytearray()
+    
     try:
         # Read available bytes from the serial buffer
         incoming = ser.read(ser.in_waiting or 1)
@@ -98,7 +100,6 @@ def read_packets(ser):
         if not incoming:
             return
         
-        buffer = bytearray()
         buffer.extend(incoming)
 
         # Process packets ending with [0xFF, 0xFF]
