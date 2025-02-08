@@ -48,15 +48,13 @@ plot_running = True
 # Data rate tracking variables
 packet_count = 0
 last_update_time = time.time()
+last_incoming_len = 0
 
 # Serial configuration
 baud_rate = 256000
 bytes_per_channel = 2
 packet_size = channels * bytes_per_channel
 
-# Buffer for incoming serial data
-buffer = bytearray()
-last_incoming_len = 0
 
 class SyntheticSerial:
     """Mock serial port for generating synthetic ADC data."""
@@ -99,7 +97,8 @@ def read_packets(ser):
         # Track the incoming buffer length for smoothing (optional monitoring)
         if not incoming:
             return
-
+        
+        buffer = bytearray()
         buffer.extend(incoming)
 
         # Process packets ending with [0xFF, 0xFF]
