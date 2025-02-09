@@ -9,6 +9,7 @@ from collections import deque
 
 class SyntheticSerial:
     """Mock serial port for generating synthetic ADC data."""
+
     def __init__(self):
         self.current_count = 0
         self.buffer = bytearray()  # Use a bytearray to store bytes
@@ -29,9 +30,9 @@ class SyntheticSerial:
             packets = bytearray()
             for _ in range(100):
                 for channel in range(self.channels):
-                    value = (self.current_count + channel*100) % 4096
-                    packets += value.to_bytes(2, byteorder='little')
-                packets += b'\xFF\xFF'  # Delimiter
+                    value = (self.current_count + channel * 100) % 4096
+                    packets += value.to_bytes(2, byteorder="little")
+                packets += b"\xFF\xFF"  # Delimiter
                 self.current_count += 1
 
             # Add the packet bytes to the buffer (thread-safe)
@@ -51,7 +52,7 @@ class SyntheticSerial:
         with self.buffer_lock:
             return len(self.buffer)
 
-    def read(self, size=1):
+    def read(self, size: int = 1):
         """Read bytes from the buffer."""
         with self.buffer_lock:
             # Read up to `size` bytes from the buffer
@@ -66,7 +67,7 @@ class SyntheticSerial:
         self.worker_thread.join()
 
 
-def main(serial_port, baud_rate):
+def main(serial_port: str, baud_rate: int):
     """Main loop for reading serial data and updating the plot."""
     # Serial configuration
     channels = 6
@@ -79,11 +80,11 @@ def main(serial_port, baud_rate):
 
     # Set up the plot
     fig, ax = plt.subplots()
-    lines = []
-    colors = plt.cm.tab10.colors  # Use a colormap for consistent colors
-    for i in range(channels):
-        line, = ax.plot(data[i], label=f'Channel {i}', color=colors[i])
-        lines.append(line)
+    colors = plt.cm.tab10.colors  # Use a colormap for consistent colors # type: ignore
+    lines = [
+        ax.plot(data[i], label=f"Channel {i}", color=colors[i])[0]
+        for i in range(channels)
+    ]
     ax.set_ylim(0, 4095)  # ADC range for 12-bit resolution is 0-4095
     ax.set_title("Real-Time ADC Data")
     ax.set_xlabel("Samples")
@@ -112,7 +113,7 @@ def main(serial_port, baud_rate):
 
     plot_running = True
 
-    def on_close(event):
+    def on_close(_):
         """Handle the plot window close event."""
         nonlocal plot_running
         plot_running = False
@@ -135,12 +136,14 @@ def main(serial_port, baud_rate):
         if lines[index].get_visible():
             buttons[index].color = colors[index]
         else:
-            buttons[index].color = 'gray'
+            buttons[index].color = "gray"
         buttons[index].ax.set_facecolor(buttons[index].color)
         plt.draw()
 
     for i in range(channels):
-        ax_button = plt.axes([initial_x, initial_y - i * button_spacing, button_width, button_height])
+        ax_button = plt.axes(
+            (initial_x, initial_y - i * button_spacing, button_width, button_height)
+        )
         button = Button(ax_button, f"Ch {i}", color=colors[i])
         button.on_clicked(lambda event, i=i: toggle_channel(i))
         buttons.append(button)
@@ -164,7 +167,7 @@ def main(serial_port, baud_rate):
             # Track the incoming buffer length for smoothing (optional monitoring)
             if not incoming:
                 return
-            
+
             buffer.extend(incoming)
 
             # Process packets ending with [0xFF, 0xFF]
@@ -176,17 +179,25 @@ def main(serial_port, baud_rate):
 
                 # Extract the packet (up to but excluding [0xFF, 0xFF])
                 packet = buffer[:delimiter_index]
-                buffer = buffer[delimiter_index + 2:]  # Remove the packet and delimiter
+                buffer = buffer[
+                    delimiter_index + 2 :
+                ]  # Remove the packet and delimiter
 
                 # Process the packet
                 try:
                     if len(packet) == packet_size:
                         # Append each channel's value to their respective deque
                         for i in range(channels):
-                            data[i].append(int.from_bytes(packet[2*i:2*(i+1)], byteorder="little"))
+                            data[i].append(
+                                int.from_bytes(
+                                    packet[2 * i : 2 * (i + 1)], byteorder="little"
+                                )
+                            )
                         packet_count += 1
                     else:
-                        print(f"Unexpected packet size: {len(packet)} (expected {packet_size})")
+                        print(
+                            f"Unexpected packet size: {len(packet)} (expected {packet_size})"
+                        )
                 except Exception as e:
                     print(f"Packet processing error: {e}")
         except Exception as e:
@@ -222,7 +233,7 @@ def main(serial_port, baud_rate):
             fig.canvas.draw_idle()
             plt.pause(0.01)  # Allow matplotlib to process GUI events
 
-    if serial_port == 'synthetic':
+    if serial_port == "synthetic":
         # Use synthetic data generator
         ser = SyntheticSerial()
         print("Starting synthetic data mode...")
@@ -245,12 +256,17 @@ def main(serial_port, baud_rate):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog='Signal Plotter',
-        description='Plot real-time ADC data from serial port or generate synthetic data.'
+        prog="Signal Plotter",
+        description="Plot real-time ADC data from serial port or generate synthetic data.",
     )
-    parser.add_argument('-p', '--port', type=str, required=True,
-                        help="Serial port name or 'synthetic' for synthetic data")
-    parser.add_argument('-b', '--baud', type=int, default=256000)
+    parser.add_argument(
+        "-p",
+        "--port",
+        type=str,
+        required=True,
+        help="Serial port name or 'synthetic' for synthetic data",
+    )
+    parser.add_argument("-b", "--baud", type=int, default=256000)
     args = parser.parse_args()
 
     main(args.port, args.baud)
