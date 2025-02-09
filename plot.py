@@ -3,6 +3,7 @@ import threading
 import serial
 import time
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Button
 from collections import deque
 
 # Create a deque for each channel to store the last N records
@@ -13,14 +14,14 @@ data = [deque([0] * dmaxlen, maxlen=dmaxlen) for _ in range(channels)]
 # Set up the plot
 fig, ax = plt.subplots()
 lines = []
+colors = plt.cm.tab10.colors  # Use a colormap for consistent colors
 for i in range(channels):
-    line, = ax.plot(data[i], label=f'Channel {i}')
+    line, = ax.plot(data[i], label=f'Channel {i}', color=colors[i])
     lines.append(line)
 ax.set_ylim(0, 4095)  # ADC range for 12-bit resolution is 0-4095
 ax.set_title("Real-Time ADC Data")
 ax.set_xlabel("Samples")
 ax.set_ylabel("ADC Value")
-ax.legend()
 
 # Text objects to display data rate and buffer size
 data_rate_text = ax.text(
@@ -197,12 +198,37 @@ def plot_update(ser):
         plt.pause(0.01)  # Allow matplotlib to process GUI events
 
 
+# Function to toggle visibility of a channel and update button color
+def toggle_channel(index):
+    lines[index].set_visible(not lines[index].get_visible())
+    if lines[index].get_visible():
+        buttons[index].color = colors[index]
+    else:
+        buttons[index].color = 'gray'
+    buttons[index].ax.set_facecolor(buttons[index].color)
+    plt.draw()
+
+
 def main(serial_port):
     """Main loop for reading serial data and updating the plot."""
-    global plot_running
+    global plot_running, buttons
 
     # Connect the close event handler
     fig.canvas.mpl_connect("close_event", on_close)
+
+    # Create buttons for each channel and place them in the top-right corner
+    buttons = []
+    button_width = 0.1  # Width of each button
+    button_height = 0.04  # Height of each button
+    button_spacing = 0.05  # Vertical spacing between buttons
+    initial_x = 0.85  # X position (right side)
+    initial_y = 0.9  # Y position (top)
+
+    for i in range(channels):
+        ax_button = plt.axes([initial_x, initial_y - i * button_spacing, button_width, button_height])
+        button = Button(ax_button, f"Ch {i}", color=colors[i])
+        button.on_clicked(lambda event, i=i: toggle_channel(i))
+        buttons.append(button)
 
     if serial_port == 'synthetic':
         # Use synthetic data generator
