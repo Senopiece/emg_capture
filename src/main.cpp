@@ -30,13 +30,16 @@ void loop()
 {
     uint32_t current_time = micros();
 
-    // TODO: measure actual delay variance
+    // variance is 35us
 
     // Check if it's time to send the next packet
     if (current_time - last_time >= interval_us)
     {
         // Read channels and populate packet
         for (size_t i = 0; i < CHANNELS; i++) packet[i] = analogRead(pin[i]);
+
+        // Temporary to see the delay variance
+        // packet[0] = current_time - last_time;
 
         // Send the packet
         // assert data is not OxFFFF - passes since adc is only 12 bit - the rest of the bits are 0
