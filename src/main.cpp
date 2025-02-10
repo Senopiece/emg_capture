@@ -18,6 +18,7 @@ void setup()
 {
     // USBCDC
     Serial.begin(BAUDRATE);
+    Serial.setTxTimeoutMs(1);  // Lower timeout for quick transmission
 
     // Initialize analog pins
     for (size_t i = 0; i < CHANNELS; i++) pinMode(pin[i], INPUT);
@@ -39,7 +40,7 @@ void loop()
         for (size_t i = 0; i < CHANNELS; i++) packet[i] = analogRead(pin[i]);
 
         // Temporary to see the delay variance
-        // packet[0] = current_time - last_time;
+        packet[0] = current_time - last_time;
 
         // Send the packet
         // assert data is not OxFFFF - passes since adc is only 12 bit - the rest of the bits are 0
