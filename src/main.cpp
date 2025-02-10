@@ -94,7 +94,7 @@ void loop()
 
         #ifdef BENCHMARKME
         // Rewrite for benchmark
-        packet[0] = lst - st; // Sample interval - must be near interval_us (mean: inverval_us, variance: typical: +-1us, max: 40us - interestingly variance is always symmetrical meaning no time drift)
+        packet[0] = lst - st; // Sample interval - must be near interval_us (mean: inverval_us, variance: typical: +-1us, max: 40us - interestingly variance is always symmetrical meaning no time drift, 40us spikes appear nearly each 10 seconds)
         packet[1] = micros() - lst; // ADC reading (mean: 116.5us, variance: typical: +-1us, max: 44us)
         st = lst;
         #endif
