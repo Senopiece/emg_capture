@@ -1,13 +1,12 @@
 {
+    "terminal.integrated.defaultProfile.windows": "Zephyr IDE Terminal",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}\\.vscode\\compile_commands.json",
+    "cmake.configureOnOpen": false,
+    "zephyr-ide.use-zephyr-ide-json": true,
+    "zephyr-ide.projects": null,
     "files.associations": {
-        "optional": "cpp",
-        "istream": "cpp",
-        "ostream": "cpp",
-        "system_error": "cpp",
-        "array": "cpp",
-        "functional": "cpp",
-        "tuple": "cpp",
-        "type_traits": "cpp",
-        "utility": "cpp"
-    }
+        "packet_sink.h": "c"
+    },
+    "devicetree.zephyr": "${workspaceFolder}\\external\\zephyr",
+    "kconfig.zephyr.base": "${workspaceFolder}\\external\\zephyr"
 }

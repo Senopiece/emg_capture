@@ -1,0 +1,36 @@
+{
+  "projects": {
+    "xiao_adc_sampler": {
+      "rel_path": "xiao_adc_sampler",
+      "name": "xiao_adc_sampler",
+      "buildConfigs": {
+        "build\\xiao_ble\\nrf52840": {
+          "board": "xiao_ble/nrf52840",
+          "relBoardSubDir": "seeed\\xiao_ble",
+          "name": "build\\xiao_ble\\nrf52840",
+          "westBuildArgs": "",
+          "westBuildCMakeArgs": " -DCONFIG_SPEED_OPTIMIZATIONS=y ",
+          "confFiles": {
+            "config": [],
+            "extraConfig": [],
+            "overlay": [],
+            "extraOverlay": []
+          },
+          "runnerConfigs": {
+            "uf2": {
+              "runner": "uf2",
+              "name": "uf2",
+              "args": ""
+            }
+          }
+        }
+      },
+      "confFiles": {
+        "config": [],
+        "extraConfig": [],
+        "overlay": [],
+        "extraOverlay": []
+      }
+    }
+  }
+}

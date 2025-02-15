@@ -82,7 +82,7 @@ def main(serial_port: str, baud_rate: int):
     fig, ax = plt.subplots()
     colors = plt.cm.tab10.colors  # Use a colormap for consistent colors # type: ignore
     lines = [
-        ax.plot(data[i], label=f"Channel {i}", color=colors[i])[0]
+        ax.plot(data[i], label=f"Channel {i}", color=colors[i % len(colors)])[0]
         for i in range(channels)
     ]
     ax.set_ylim(0, 4095)  # ADC range for 12-bit resolution is 0-4095
@@ -144,7 +144,7 @@ def main(serial_port: str, baud_rate: int):
         ax_button = plt.axes(
             (initial_x, initial_y - i * button_spacing, button_width, button_height)
         )
-        button = Button(ax_button, f"Ch {i}", color=colors[i])
+        button = Button(ax_button, f"Ch {i}", color=colors[i % len(colors)])
         button.on_clicked(lambda event, i=i: toggle_channel(i))
         buttons.append(button)
 
@@ -194,9 +194,12 @@ def main(serial_port: str, baud_rate: int):
                                 )
                             )
                         packet_count += 1
+                        # print(
+                        #     f"Expected packet size: {len(packet)} (expected {packet_size}) - {packet}"
+                        # )
                     else:
                         print(
-                            f"Unexpected packet size: {len(packet)} (expected {packet_size})"
+                            f"Unexpected packet size: {len(packet)} (expected {packet_size}) - {packet}"
                         )
                 except Exception as e:
                     print(f"Packet processing error: {e}")
@@ -237,21 +240,23 @@ def main(serial_port: str, baud_rate: int):
         # Use synthetic data generator
         ser = SyntheticSerial()
         print("Starting synthetic data mode...")
-        try:
-            plot_update(ser)
-        finally:
-            print("Exiting program.")
-            ser.close()
     else:
         # Open real serial connection
         try:
-            with serial.Serial(serial_port, baud_rate, timeout=1) as ser:
-                print(f"Listening on {serial_port} at {baud_rate} baud...")
-                plot_update(ser)
+            ser = serial.Serial(serial_port, baud_rate, timeout=0)  # Non-blocking read
+
+            # Increase serial input buffer size if supported (Windows/Linux only)
+            if hasattr(ser, "set_buffer_size"):
+                ser.set_buffer_size(rx_size=4096)
+
+            print(f"Listening on {serial_port} at {baud_rate} baud...")
         except Exception as e:
             print(f"Serial connection error: {e}")
-        finally:
-            print("Exiting program.")
+            return
+
+    plot_update(ser)
+
+    ser.close()
 
 
 if __name__ == "__main__":
