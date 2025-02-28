@@ -151,13 +151,13 @@ def main(serial_port: str, baud_rate: int):
     last_incoming_len = 0
     packet_count = 0
 
+    buffer = bytearray()
+
     def read_packets(ser):
         """
         Read and decode all packets ending with [0xFF, 0xFF] from the serial buffer.
         """
-        nonlocal last_incoming_len, packet_count
-
-        buffer = bytearray()
+        nonlocal last_incoming_len, packet_count, buffer
 
         try:
             # Read available bytes from the serial buffer
