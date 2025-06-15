@@ -19,7 +19,7 @@
 
 4. 3D print the [box](3d/box.plasticity) and put all the components altogether
 
-![showcase](fig/box1.jpg)
+![showcase](fig/box.jpg)
 
 5. Optionally get a USB isolator like `BM8050usb`
 
